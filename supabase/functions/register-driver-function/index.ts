@@ -285,7 +285,7 @@ Deno.serve(async (req: Request) => {
     const driverId = driver.id;
 
     // 3. Insert next-of-kin record
-    const { error: kinError } = await supabase.from("next_of_kin").insert({
+    const { error: kinError } = await supabase.from("next_of_kins").insert({
       driver_id: driverId,
       fullname: payload.kinFullName.trim(),
       mobile_number: normaliseZwNumber(payload.kinMobileNumber),
@@ -294,7 +294,7 @@ Deno.serve(async (req: Request) => {
 
     if (kinError) {
       // Non-fatal — registration succeeded, log and move on
-      console.error("[register-driver] next_of_kin insert error:", kinError);
+      console.error("[register-driver] next_of_kins insert error:", kinError);
     }
 
     // 4. Insert training records (optional)
