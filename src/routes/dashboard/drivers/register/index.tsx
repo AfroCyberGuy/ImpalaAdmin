@@ -1,12 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import Stepper, { type Step } from "#/components/widgets/Stepper";
 import InputField from "#/components/widgets/InputField";
+import PhoneField from "#/components/widgets/PhoneField";
 import SelectField from "#/components/widgets/SelectField";
 import TextareaField from "#/components/widgets/TextareaField";
 import DatePickerField from "#/components/widgets/DatePickerField";
 import FileUpload from "#/components/widgets/FileUpload";
 import Button from "#/components/widgets/Button";
+import { uploadDriverFiles } from "#/utils/driverStorage";
+import { supabase } from "#/utils/supabase";
 
 export const Route = createFileRoute("/dashboard/drivers/register/")({
   component: RegisterDriver,
@@ -22,9 +26,8 @@ const STEPS: Step[] = [
 ];
 
 const GENDER_OPTIONS = [
-  { label: "Male", value: "male" },
-  { label: "Female", value: "female" },
-  { label: "Other", value: "other" },
+  { label: "Male", value: "1" },
+  { label: "Female", value: "2" },
 ];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -77,6 +80,16 @@ const TRAINING_ITEMS = [
 
 type TrainingKey = (typeof TRAINING_ITEMS)[number]["key"];
 
+// Maps TrainingKey to the training_type_id in the database (matches PHP logic)
+const TRAINING_TYPE_IDS: Record<TrainingKey, number> = {
+  induction: 1,
+  codeOfConduct: 2,
+  safeDriving: 3,
+  grooming: 4,
+  vipCourse: 5,
+  inhouseRetest: 6,
+};
+
 type Step4Form = {
   trainings: Partial<Record<TrainingKey, { completed: boolean; date: string }>>;
 };
@@ -97,6 +110,7 @@ type Step6Form = {
   innbucksNumber: string;
 };
 
+type Step5Errors = Partial<Record<keyof Step5Form, string>>;
 type Step6Errors = Partial<Record<keyof Step6Form, string>>;
 
 type Step1Errors = Partial<Record<keyof Step1Form, string>>;
@@ -134,8 +148,8 @@ function validateStep2(f: Step2Form): Step2Errors {
 
 function validateStep3(f: Step3Form): Step3Errors {
   const e: Step3Errors = {};
-  if (!f.drivingExperience.trim())
-    e.drivingExperience = "Driving experience is required";
+  if (!f.drivingExperience.trim() || Number(f.drivingExperience) < 1)
+    e.drivingExperience = "Driving experience is required (minimum 1 year)";
   if (!f.licenceNumber.trim())
     e.licenceNumber = "Drivers licence number is required";
   if (!f.licenceIssueDate)
@@ -146,10 +160,27 @@ function validateStep3(f: Step3Form): Step3Errors {
   return e;
 }
 
+function validateStep5(f: Step5Form): Step5Errors {
+  const e: Step5Errors = {};
+  if (!f.medicalTestIssueDate)
+    e.medicalTestIssueDate = "Medical test issue date is required";
+  if (!f.policeClearanceIssueDate)
+    e.policeClearanceIssueDate = "Police clearance issue date is required";
+  if (!f.medicalTestFile)
+    e.medicalTestFile = "Medical test document is required";
+  if (!f.policeClearanceFile)
+    e.policeClearanceFile = "Police clearance document is required";
+  if (!f.proofOfResidenceFile)
+    e.proofOfResidenceFile = "Proof of residence document is required";
+  return e;
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 function RegisterDriver() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [step1, setStep1] = useState<Step1Form>({
     firstName: "",
@@ -203,6 +234,7 @@ function RegisterDriver() {
     innbucksNumber: "",
   });
 
+  const [errors5, setErrors5] = useState<Step5Errors>({});
   const [errors6, setErrors6] = useState<Step6Errors>({});
 
   const [errors1, setErrors1] = useState<Step1Errors>({});
@@ -224,12 +256,17 @@ function RegisterDriver() {
     if (errors3[key]) setErrors3((prev) => ({ ...prev, [key]: undefined }));
   }
 
+  function setS5<K extends keyof Step5Form>(key: K, value: Step5Form[K]) {
+    setStep5((prev) => ({ ...prev, [key]: value }));
+    if (errors5[key]) setErrors5((prev) => ({ ...prev, [key]: undefined }));
+  }
+
   function setS6<K extends keyof Step6Form>(key: K, value: Step6Form[K]) {
     setStep6((prev) => ({ ...prev, [key]: value }));
     if (errors6[key]) setErrors6((prev) => ({ ...prev, [key]: undefined }));
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (currentStep === 0) {
       const errs = validateStep1(step1);
       if (Object.keys(errs).length > 0) {
@@ -251,6 +288,13 @@ function RegisterDriver() {
         return;
       }
     }
+    if (currentStep === 4) {
+      const errs = validateStep5(step5);
+      if (Object.keys(errs).length > 0) {
+        setErrors5(errs);
+        return;
+      }
+    }
     if (currentStep === 5) {
       const errs: Step6Errors = {};
       if (!step6.bank) errs.bank = "Bank is required";
@@ -260,10 +304,119 @@ function RegisterDriver() {
         setErrors6(errs);
         return;
       }
-      // TODO: submit all form data
+      await handleSubmit();
       return;
     }
     setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+  }
+
+  async function handleSubmit() {
+    // Guard: all required files must be present before we attempt any upload
+    if (
+      !step1.nationalIdFile ||
+      !step1.profilePhotoFile ||
+      !step3.driversLicenceFile ||
+      !step5.medicalTestFile ||
+      !step5.policeClearanceFile ||
+      !step5.proofOfResidenceFile
+    ) {
+      toast.error(
+        "Some required documents are missing. Please go back and upload them.",
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
+    const toastId = toast.loading("Uploading documents…");
+
+    try {
+      // 1. Upload all files to Supabase Storage
+      const filePaths = await uploadDriverFiles({
+        nationalIdFile: step1.nationalIdFile,
+        profilePhotoFile: step1.profilePhotoFile,
+        driversLicenceFile: step3.driversLicenceFile,
+        medicalTestFile: step5.medicalTestFile,
+        policeClearanceFile: step5.policeClearanceFile,
+        proofOfResidenceFile: step5.proofOfResidenceFile,
+        passportFile: step1.passportFile,
+        defensiveLicenceFile: step3.defensiveLicenceFile,
+        internationalLicenceFile: step3.internationalLicenceFile,
+        firstAidCertificateFile: step3.firstAidCertificateFile,
+      });
+
+      toast.loading("Saving driver profile…", { id: toastId });
+
+      // 2. Build training array from step4 (only completed items with a date)
+      const trainings = (
+        Object.entries(step4.trainings) as [
+          string,
+          { completed: boolean; date: string },
+        ][]
+      )
+        .filter(([, v]) => v.completed && v.date)
+        .map(([key, v]) => ({
+          trainingTypeId: TRAINING_TYPE_IDS[key as TrainingKey],
+          trainingDate: v.date,
+        }));
+
+      // 3. Call the edge function
+      const { data, error } = await supabase.functions.invoke(
+        "register-driver-function",
+        {
+          body: {
+            // Step 1
+            firstName: step1.firstName,
+            lastName: step1.lastName,
+            dateOfBirth: step1.dateOfBirth,
+            gender: step1.gender,
+            mobileNumber: step1.mobileNumber,
+            secondMobileNumber: step1.secondMobileNumber || undefined,
+            email: step1.email,
+            physicalAddress: step1.physicalAddress,
+            nationalIdNumber: step1.nationalIdNumber,
+            passportNumber: step1.passportNumber || undefined,
+            ...filePaths,
+            // Step 2
+            kinFullName: step2.fullName,
+            kinMobileNumber: step2.mobileNumber,
+            kinPhysicalAddress: step2.physicalAddress,
+            // Step 3
+            drivingExperience: Number(step3.drivingExperience) || 0,
+            licenceNumber: step3.licenceNumber,
+            licenceIssueDate: step3.licenceIssueDate,
+            licenceClass: step3.licenceClass,
+            defensiveLicenceExpiry: step3.defensiveLicenceExpiry || undefined,
+            // Step 4
+            trainings,
+            // Step 5
+            medicalTestIssueDate: step5.medicalTestIssueDate,
+            policeClearanceIssueDate: step5.policeClearanceIssueDate,
+            impalaCertificateIssueDate: step5.impalaCertificateIssueDate,
+            // Step 6
+            bank: step6.bank,
+            accountNumber: step6.accountNumber,
+            ecocashNumber: step6.ecocashNumber || undefined,
+            innbucksNumber: step6.innbucksNumber || undefined,
+          },
+        },
+      );
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`Driver registered successfully! Code: ${data.code}`, {
+        id: toastId,
+        duration: 5000,
+      });
+
+      navigate({ to: "/dashboard/drivers" });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+      toast.error(`Registration failed: ${message}`, { id: toastId });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handlePrevious() {
@@ -299,7 +452,9 @@ function RegisterDriver() {
             <Step3 form={step3} errors={errors3} set={setS3} />
           )}
           {currentStep === 3 && <Step4 form={step4} set={setStep4} />}
-          {currentStep === 4 && <Step5 form={step5} set={setStep5} />}
+          {currentStep === 4 && (
+            <Step5 form={step5} errors={errors5} set={setS5} />
+          )}
           {currentStep === 5 && (
             <Step6 form={step6} errors={errors6} set={setS6} />
           )}
@@ -308,14 +463,28 @@ function RegisterDriver() {
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-8 py-5 border-t border-gray-100">
           {currentStep === 0 ? (
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost" disabled={isSubmitting}>
+              Cancel
+            </Button>
           ) : (
-            <Button variant="ghost" onClick={handlePrevious}>
+            <Button
+              variant="ghost"
+              onClick={handlePrevious}
+              disabled={isSubmitting}
+            >
               Previous
             </Button>
           )}
-          <Button variant="primary" onClick={handleNext}>
-            {currentStep === STEPS.length - 1 ? "Submit" : "Next"}
+          <Button
+            variant="primary"
+            onClick={handleNext}
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Submitting…"
+              : currentStep === STEPS.length - 1
+                ? "Submit"
+                : "Next"}
           </Button>
         </div>
       </div>
@@ -379,22 +548,18 @@ function Step1({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <InputField
+          <PhoneField
             id="mobileNumber"
             label="Mobile Number"
             value={form.mobileNumber}
             onChange={(v) => set("mobileNumber", v)}
-            placeholder="Enter mobile number"
-            type="tel"
             error={errors.mobileNumber}
           />
-          <InputField
+          <PhoneField
             id="secondMobileNumber"
-            label="Second Mobile Number"
+            label="Second Mobile Number (Optional)"
             value={form.secondMobileNumber}
             onChange={(v) => set("secondMobileNumber", v)}
-            placeholder="Enter mobile number"
-            type="tel"
           />
         </div>
 
@@ -494,13 +659,11 @@ function Step2({
             placeholder="Next of kin full name"
             error={errors.fullName}
           />
-          <InputField
+          <PhoneField
             id="kinMobileNumber"
             label="Mobile Number"
             value={form.mobileNumber}
             onChange={(v) => set("mobileNumber", v)}
-            placeholder="Mobile number"
-            type="tel"
             error={errors.mobileNumber}
           />
         </div>
@@ -522,12 +685,11 @@ function Step2({
 
 // ── Step 3 — Licensing ─────────────────────────────────────────────────────────
 
+// Values are drivers_licences.id (PK) — saved as drivers_licence_id in the drivers table
 const LICENCE_CLASS_OPTIONS = [
-  { label: "Class 1", value: "1" },
+  { label: "Class 4", value: "1" },
   { label: "Class 2", value: "2" },
-  { label: "Class 3", value: "3" },
-  { label: "Class 4", value: "4" },
-  { label: "Class 5", value: "5" },
+  { label: "Class 1", value: "3" },
 ];
 
 function Step3({
@@ -549,10 +711,11 @@ function Step3({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <InputField
             id="drivingExperience"
-            label="Driving Experience"
+            label="Driving Experience (years)"
+            type="number"
             value={form.drivingExperience}
             onChange={(v) => set("drivingExperience", v)}
-            placeholder="Driving experience"
+            placeholder="e.g. 5"
             error={errors.drivingExperience}
           />
           <InputField
@@ -704,15 +867,13 @@ function Step4({
 
 function Step5({
   form,
+  errors,
   set,
 }: {
   form: Step5Form;
-  set: React.Dispatch<React.SetStateAction<Step5Form>>;
+  errors: Step5Errors;
+  set: <K extends keyof Step5Form>(key: K, value: Step5Form[K]) => void;
 }) {
-  function s<K extends keyof Step5Form>(key: K, value: Step5Form[K]) {
-    set((prev) => ({ ...prev, [key]: value }));
-  }
-
   return (
     <>
       <h2 className="text-base font-semibold text-gray-800 mb-6">
@@ -725,15 +886,17 @@ function Step5({
             id="medicalTestIssueDate"
             label="Medical Test Issue Date"
             value={form.medicalTestIssueDate}
-            onChange={(v) => s("medicalTestIssueDate", v)}
+            onChange={(v) => set("medicalTestIssueDate", v)}
             placeholder="Medical Test Issue Date"
+            error={errors.medicalTestIssueDate}
           />
           <DatePickerField
             id="policeClearanceIssueDate"
             label="Police Clearance Issue Date"
             value={form.policeClearanceIssueDate}
-            onChange={(v) => s("policeClearanceIssueDate", v)}
+            onChange={(v) => set("policeClearanceIssueDate", v)}
             placeholder="Police Clearance Issue Date"
+            error={errors.policeClearanceIssueDate}
           />
         </div>
 
@@ -742,12 +905,14 @@ function Step5({
           <FileUpload
             label="Upload Medical Test"
             value={form.medicalTestFile}
-            onChange={(f) => s("medicalTestFile", f)}
+            onChange={(f) => set("medicalTestFile", f)}
+            error={errors.medicalTestFile}
           />
           <FileUpload
-            label="Upload Police Clearence"
+            label="Upload Police Clearance"
             value={form.policeClearanceFile}
-            onChange={(f) => s("policeClearanceFile", f)}
+            onChange={(f) => set("policeClearanceFile", f)}
+            error={errors.policeClearanceFile}
           />
         </div>
 
@@ -757,13 +922,14 @@ function Step5({
             id="impalaCertificateIssueDate"
             label="Impala Certificate Issue Date"
             value={form.impalaCertificateIssueDate}
-            onChange={(v) => s("impalaCertificateIssueDate", v)}
+            onChange={(v) => set("impalaCertificateIssueDate", v)}
             placeholder="Impala Certificate Issue Date"
           />
           <FileUpload
             label="Upload Proof Of Residence"
             value={form.proofOfResidenceFile}
-            onChange={(f) => s("proofOfResidenceFile", f)}
+            onChange={(f) => set("proofOfResidenceFile", f)}
+            error={errors.proofOfResidenceFile}
           />
         </div>
       </div>
@@ -774,14 +940,10 @@ function Step5({
 // ── Step 6 — Banking Details ───────────────────────────────────────────────────
 
 const BANK_OPTIONS = [
-  { label: "CBZ Bank", value: "cbz" },
-  { label: "FBC Bank", value: "fbc" },
-  { label: "Stanbic Bank", value: "stanbic" },
-  { label: "Standard Chartered", value: "standard_chartered" },
-  { label: "ZB Bank", value: "zb" },
-  { label: "NMB Bank", value: "nmb" },
-  { label: "Steward Bank", value: "steward" },
-  { label: "BancABC", value: "bancabc" },
+  { label: "CABS", value: "1" },
+  { label: "FBC", value: "2" },
+  { label: "NBS", value: "3" },
+  { label: "Stanbic", value: "4" },
 ];
 
 function Step6({
@@ -809,13 +971,11 @@ function Step6({
             placeholder="Bank"
             error={errors.bank}
           />
-          <InputField
+          <PhoneField
             id="ecocashNumber"
             label="Ecocash Number (Optional)"
             value={form.ecocashNumber}
             onChange={(v) => set("ecocashNumber", v)}
-            placeholder="Ecocash number"
-            type="tel"
           />
         </div>
 
@@ -828,13 +988,11 @@ function Step6({
             placeholder="Bank account number"
             error={errors.accountNumber}
           />
-          <InputField
+          <PhoneField
             id="innbucksNumber"
             label="Innbucks Number (Optional)"
             value={form.innbucksNumber}
             onChange={(v) => set("innbucksNumber", v)}
-            placeholder="Innbucks number"
-            type="tel"
           />
         </div>
       </div>
