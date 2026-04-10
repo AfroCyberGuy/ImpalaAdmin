@@ -1,23 +1,21 @@
-"use client";
 import { useState } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { supabase } from "#/utils/supabase";
 import {
   Home,
-  UserPlus,
   Users,
   DollarSign,
   Car,
   Truck,
-  MapPin,
   BarChart2,
   Navigation,
   Bus,
   CalendarCheck,
-  BookOpen,
   CreditCard,
   ShieldCheck,
   ChevronDown,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 
 type NavItem = {
@@ -101,6 +99,12 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const { location } = useRouterState();
   const pathname = location.pathname;
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.navigate({ to: "/login" });
+  }
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -234,6 +238,13 @@ export default function Sidebar() {
             </p>
             <p className="truncate text-xs text-white/40">admin@impala.co.zw</p>
           </div>
+          <button
+            onClick={handleSignOut}
+            title="Sign out"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </aside>

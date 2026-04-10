@@ -1,10 +1,20 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useState } from "react";
 import Button from "#/components/widgets/Button";
 import InputField from "#/components/widgets/InputField";
 import { supabase } from "#/utils/supabase";
 
 export const Route = createFileRoute("/login/")({
+  beforeLoad: ({ context }) => {
+    if (context.session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: LoginPage,
 });
 

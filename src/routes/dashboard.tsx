@@ -1,8 +1,13 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
 
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: ({ context }) => {
+    if (!context.session) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: DashboardLayout,
 });
 
