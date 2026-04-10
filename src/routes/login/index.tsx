@@ -45,8 +45,17 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const ALLOWED_DOMAINS = ["impala.co.zw", "dacit.co.uk"];
+
   async function handleSignIn() {
     setError(null);
+
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain || !ALLOWED_DOMAINS.includes(domain)) {
+      setError("Access restricted to @impala.co.zw and @dacit.co.uk accounts.");
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
