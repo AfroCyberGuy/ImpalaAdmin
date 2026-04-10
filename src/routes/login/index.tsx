@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  redirect,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import Button from "#/components/widgets/Button";
 import InputField from "#/components/widgets/InputField";
@@ -50,8 +44,6 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const router = useRouter();
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,8 +62,7 @@ function LoginPage() {
       return;
     }
 
-    await router.invalidate();
-    navigate({ to: "/dashboard" });
+    window.location.href = "/dashboard";
   }
 
   return (
