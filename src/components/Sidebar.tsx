@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "#/utils/supabase";
 import {
   Home,
@@ -99,11 +99,9 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const { location } = useRouterState();
   const pathname = location.pathname;
-  const router = useRouter();
-
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.navigate({ to: "/login" });
+    window.location.href = "/login";
   }
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {

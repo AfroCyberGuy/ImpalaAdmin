@@ -33,8 +33,12 @@ const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getIte
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: async ({ context }) => {
-    const { data } = await supabase.auth.getSession();
-    context.session = data.session;
+    // getSession() only works on the client (reads localStorage).
+    // On the server it always returns null, so skip it there.
+    if (typeof window !== "undefined") {
+      const { data } = await supabase.auth.getSession();
+      context.session = data.session;
+    }
   },
   head: () => ({
     meta: [
@@ -58,7 +62,20 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   }),
   shellComponent: RootDocument,
   component: RootComponent,
+  notFoundComponent: NotFound,
 });
+
+function NotFound() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-600">
+      <h1 className="text-4xl font-bold text-gray-800">404</h1>
+      <p className="text-lg">Page not found.</p>
+      <a href="/dashboard" className="text-emerald-600 hover:underline text-sm">
+        Back to dashboard
+      </a>
+    </div>
+  );
+}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -71,7 +88,10 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const { location } = useRouterState();
-  const isDashboard = location.pathname.startsWith("/dashboard");
+  const showFooter =
+    !location.pathname.startsWith("/dashboard") &&
+    !location.pathname.startsWith("/login") &&
+    !location.pathname.startsWith("/signup");
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -81,7 +101,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
         {children}
-        {!isDashboard && <Footer />}
+        {showFooter && <Footer />}
         <Toaster richColors position="top-right" />
         <TanStackDevtools
           config={{

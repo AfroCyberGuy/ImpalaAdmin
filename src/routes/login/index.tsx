@@ -6,7 +6,7 @@ import { supabase } from "#/utils/supabase";
 
 export const Route = createFileRoute("/login/")({
   beforeLoad: ({ context }) => {
-    if (context.session) {
+    if (typeof window !== "undefined" && context.session) {
       throw redirect({ to: "/dashboard" });
     }
   },
@@ -45,8 +45,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSignIn() {
     setError(null);
     setLoading(true);
 
@@ -93,7 +92,13 @@ function LoginPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSignIn();
+          }}
+          className="space-y-5"
+        >
           <InputField
             id="email"
             label="Email address"

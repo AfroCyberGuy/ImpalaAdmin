@@ -1,17 +1,39 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
+import { supabase } from "../utils/supabase";
 
 export const Route = createFileRoute("/dashboard")({
-  beforeLoad: ({ context }) => {
-    if (!context.session) {
-      throw redirect({ to: "/login" });
-    }
-  },
   component: DashboardLayout,
 });
 
+// Persists across navigations so the check only runs once per page load
+let sessionVerified = false;
+
 function DashboardLayout() {
+  const [checking, setChecking] = useState(!sessionVerified);
+  const ran = useRef(false);
+
+  useEffect(() => {
+    if (ran.current || sessionVerified) {
+      setChecking(false);
+      return;
+    }
+    ran.current = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        window.location.href = "/login";
+      } else {
+        sessionVerified = true;
+        setChecking(false);
+      }
+    });
+  }, []);
+
+  if (checking) return null;
+
   return (
     <div className="dashboard-root flex h-screen overflow-hidden bg-gray-100">
       <Sidebar />
