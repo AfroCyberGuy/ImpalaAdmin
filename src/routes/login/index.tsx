@@ -3,6 +3,7 @@ import {
   Link,
   redirect,
   useNavigate,
+  useRouter,
 } from "@tanstack/react-router";
 import { useState } from "react";
 import Button from "#/components/widgets/Button";
@@ -50,6 +51,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const router = useRouter();
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -68,7 +70,8 @@ function LoginPage() {
       return;
     }
 
-    navigate({ to: "/" });
+    await router.invalidate();
+    navigate({ to: "/dashboard" });
   }
 
   return (
