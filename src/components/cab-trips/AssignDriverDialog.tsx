@@ -61,18 +61,22 @@ export function AssignSuccessToast({ message, onDone }: ToastProps) {
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function DriverAvatar({ src, name }: { src: string | null; name: string }) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const [imgError, setImgError] = useState(false);
 
-  if (src) {
+  const initials =
+    name
+      .split(" ")
+      .map((n) => n[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
+  if (src && !imgError) {
     return (
       <img
         src={src}
         alt={name}
+        onError={() => setImgError(true)}
         className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm shrink-0"
       />
     );

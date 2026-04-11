@@ -292,12 +292,16 @@ function Avatar({
   name: string;
   size?: "sm" | "md" | "lg";
 }) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const [imgError, setImgError] = useState(false);
+
+  const initials =
+    name
+      .split(" ")
+      .map((n) => n[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
   const dim =
     size === "lg"
       ? "w-16 h-16 text-lg"
@@ -305,11 +309,12 @@ function Avatar({
         ? "w-8 h-8 text-xs"
         : "w-11 h-11 text-sm";
 
-  if (src) {
+  if (src && !imgError) {
     return (
       <img
         src={src}
         alt={name}
+        onError={() => setImgError(true)}
         className={`${dim} rounded-full object-cover ring-2 ring-white shadow-sm shrink-0`}
       />
     );

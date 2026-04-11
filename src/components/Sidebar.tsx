@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { supabase } from "#/utils/supabase";
 import {
@@ -6,7 +6,6 @@ import {
   Users,
   DollarSign,
   Car,
-  Truck,
   BarChart2,
   Navigation,
   Bus,
@@ -99,6 +98,14 @@ const NAV_ITEMS: NavItem[] = [
 export default function Sidebar() {
   const { location } = useRouterState();
   const pathname = location.pathname;
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setUserEmail(data.session?.user?.email ?? null);
+    });
+  }, []);
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -123,9 +130,11 @@ export default function Sidebar() {
     <aside className="sidebar flex h-full w-64 flex-col bg-[#1a1f2e] text-white">
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500">
-          <Truck size={18} className="text-white" />
-        </div>
+        <img
+          src="/ridepro_icon.png"
+          alt="Impala logo"
+          className="h-9 w-9 rounded-xl object-contain"
+        />
         <div>
           <p className="text-sm font-bold leading-none">Impala</p>
           <p className="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-white/40">
@@ -227,14 +236,18 @@ export default function Sidebar() {
       {/* Footer user area */}
       <div className="border-t border-white/10 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
-            A
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1e6b3a] overflow-hidden ring-2 ring-emerald-500/30">
+            <img
+              src="/ridepro_icon.png"
+              alt="Impala"
+              className="h-full w-full object-cover"
+            />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">
               Admin User
             </p>
-            <p className="truncate text-xs text-white/40">admin@impala.co.zw</p>
+            <p className="truncate text-xs text-white/40">{userEmail ?? "—"}</p>
           </div>
           <button
             onClick={handleSignOut}

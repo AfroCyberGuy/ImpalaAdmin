@@ -78,26 +78,13 @@ function LoginPage() {
       <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
         {/* Logo / Brand */}
         <div className="flex flex-col items-center mb-8">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
-            style={{ backgroundColor: "#2E8B57" }}
-          >
-            <svg
-              className="w-7 h-7 text-white"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-              />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800">Impala Admin</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
+          <img
+            src="/ridepro_icon.png"
+            alt="Impala"
+            className="w-16 h-16 rounded-2xl object-contain mb-1"
+          />
+          <h1 className="text-2xl font-bold text-gray-800">Ridepro Admin</h1>
+        
         </div>
 
         {/* Form */}

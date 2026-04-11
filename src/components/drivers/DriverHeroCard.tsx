@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { DriverDetail } from "#/utils/queries/driverQueries";
 
 // ── Stat Pill ──────────────────────────────────────────────────────────────────
@@ -16,18 +17,22 @@ function StatPill({ value, label }: { value: number | string; label: string }) {
 // ── Avatar ─────────────────────────────────────────────────────────────────────
 
 function Avatar({ src, name }: { src: string | null; name: string }) {
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const [imgError, setImgError] = useState(false);
 
-  if (src) {
+  const initials =
+    name
+      .split(" ")
+      .map((n) => n[0] ?? "")
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "?";
+
+  if (src && !imgError) {
     return (
       <img
         src={src}
         alt={name}
+        onError={() => setImgError(true)}
         className="w-24 h-24 rounded-2xl object-cover ring-4 ring-white shadow-lg shrink-0"
       />
     );
