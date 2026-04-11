@@ -54,7 +54,18 @@ function SignupPage() {
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const siteUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : import.meta.env.VITE_SITE_URL;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${siteUrl}/login`,
+      },
+    });
 
     setLoading(false);
 
