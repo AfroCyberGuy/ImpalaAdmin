@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   CreditCard,
   ShieldCheck,
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
   LogOut,
@@ -82,6 +83,11 @@ const NAV_ITEMS: NavItem[] = [
         to: "/dashboard/car-rental-bookings/sales-personnel",
       },
     ],
+  },
+  {
+    label: "Accident Reports",
+    icon: <AlertTriangle size={18} />,
+    to: "/dashboard/accident_reports",
   },
   {
     label: "Payments",
