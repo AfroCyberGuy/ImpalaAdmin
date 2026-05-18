@@ -45,7 +45,7 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const ALLOWED_DOMAINS = ["impala.co.zw", "dacit.co.uk"];
+  const ALLOWED_DOMAINS = ["impala.co.zw", "dacit.co.uk", "gmail.com"];
 
   async function handleSignIn() {
     setError(null);
