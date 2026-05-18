@@ -12,13 +12,14 @@ export interface SystemUser {
   created_at: string;
   admin_user_id: number | null;
   role_name: string | null;
+  archive_status: number | null;
 }
 
 async function fetchSystemUsers(): Promise<SystemUser[]> {
   const { data, error } = await supabase
     .from("admin_users")
     .select(
-      "id, email, created_at, admin_user_id, roles!admin_user_id(role_name)",
+      "id, email, created_at, admin_user_id, archive_status, roles!admin_user_id(role_name)",
     )
     .order("id", { ascending: false });
 
@@ -29,6 +30,7 @@ async function fetchSystemUsers(): Promise<SystemUser[]> {
     email: row.email,
     created_at: row.created_at,
     admin_user_id: row.admin_user_id,
+    archive_status: row.archive_status ?? null,
     role_name: row.roles?.role_name ?? null,
   }));
 }
@@ -60,6 +62,35 @@ export async function updateUserRole(
   const { error } = await supabase
     .from("admin_users")
     .update({ admin_user_id: roleId })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function addAdminUser(
+  email: string,
+  roleId: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from("admin_users")
+    .insert({ email, admin_user_id: roleId });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function archiveAdminUser(userId: number): Promise<void> {
+  const { error } = await supabase
+    .from("admin_users")
+    .update({ archive_status: 1 })
+    .eq("id", userId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function unarchiveAdminUser(userId: number): Promise<void> {
+  const { error } = await supabase
+    .from("admin_users")
+    .update({ archive_status: 0 })
     .eq("id", userId);
 
   if (error) throw new Error(error.message);
