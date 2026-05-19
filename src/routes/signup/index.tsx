@@ -3,6 +3,7 @@ import { useState } from "react";
 import Button from "#/components/widgets/Button";
 import InputField from "#/components/widgets/InputField";
 import { supabase } from "#/utils/supabase";
+import { checkEmailApprovalStatus } from "#/utils/queries/systemUserQueries";
 
 export const Route = createFileRoute("/signup/")({
   component: SignupPage,
@@ -40,12 +41,14 @@ function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accountActive, setAccountActive] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setAccountActive(false);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
@@ -53,6 +56,29 @@ function SignupPage() {
     }
 
     setLoading(true);
+
+    let approvalStatus;
+    try {
+      approvalStatus = await checkEmailApprovalStatus(email);
+    } catch {
+      setError("Unable to verify your email. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!approvalStatus.found) {
+      setError(
+        "This email is not registered for admin access. Contact your administrator.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (approvalStatus.approve_status === 1) {
+      setAccountActive(true);
+      setLoading(false);
+      return;
+    }
 
     const siteUrl =
       typeof window !== "undefined"
@@ -69,21 +95,58 @@ function SignupPage() {
 
     setLoading(false);
 
-    console.log("[signup] data:", data);
-    console.log("[signup] error:", error);
-
     if (error) {
       setError(error.message);
       return;
     }
 
-    // If email confirmation is required, Supabase returns a user but no session.
-    // Otherwise the user is immediately signed in.
     if (data.session) {
       navigate({ to: "/" });
     } else {
       setSuccess(true);
     }
+  }
+
+  if (accountActive) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8 text-center">
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ backgroundColor: "#2E8B57" }}
+          >
+            <svg
+              className="w-7 h-7 text-white"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.5}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            Account already active
+          </h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Your account for{" "}
+            <span className="font-medium text-gray-700">{email}</span> is
+            already active. Please sign in to continue.
+          </p>
+          <Link
+            to="/login"
+            className="inline-block px-5 py-2.5 rounded-lg text-sm font-medium text-white"
+            style={{ backgroundColor: "#2E8B57" }}
+          >
+            Go to sign in
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (success) {

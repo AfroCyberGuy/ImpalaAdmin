@@ -51,7 +51,7 @@ function RoleBadge({ role }: { role: string | null }) {
 function SkeletonRow() {
   return (
     <tr className="border-b border-gray-50">
-      {[...Array(4)].map((_, i) => (
+      {[...Array(5)].map((_, i) => (
         <td key={i} className="px-5 py-4">
           <div
             className="h-4 bg-gray-100 rounded-md animate-pulse"
@@ -861,6 +861,9 @@ function SystemUsers() {
                 <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Joined
                 </th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Active
+                </th>
                 <th className="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -874,7 +877,7 @@ function SystemUsers() {
 
               {!isLoading && error && (
                 <tr>
-                  <td colSpan={4} className="px-5 py-16 text-center">
+                  <td colSpan={5} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <svg
                         className="w-8 h-8 text-red-300"
@@ -902,7 +905,7 @@ function SystemUsers() {
 
               {!isLoading && !error && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-5 py-16 text-center">
+                  <td colSpan={5} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <svg
                         className="w-8 h-8 text-gray-200"
@@ -959,6 +962,19 @@ function SystemUsers() {
                         month: "short",
                         year: "numeric",
                       })}
+                    </td>
+
+                    {/* Active */}
+                    <td className="px-5 py-3.5">
+                      {user.approve_status === 1 ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-400 ring-1 ring-gray-200">
+                          Inactive
+                        </span>
+                      )}
                     </td>
 
                     {/* Actions */}

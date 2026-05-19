@@ -13,13 +13,14 @@ export interface SystemUser {
   admin_user_id: number | null;
   role_name: string | null;
   archive_status: number | null;
+  approve_status: number | null;
 }
 
 async function fetchSystemUsers(): Promise<SystemUser[]> {
   const { data, error } = await supabase
     .from("admin_users")
     .select(
-      "id, email, created_at, admin_user_id, archive_status, roles!admin_user_id(role_name)",
+      "id, email, created_at, admin_user_id, archive_status, approve_status, roles!admin_user_id(role_name)",
     )
     .order("id", { ascending: false });
 
@@ -31,6 +32,7 @@ async function fetchSystemUsers(): Promise<SystemUser[]> {
     created_at: row.created_at,
     admin_user_id: row.admin_user_id,
     archive_status: row.archive_status ?? null,
+    approve_status: row.approve_status ?? null,
     role_name: row.roles?.role_name ?? null,
   }));
 }
@@ -94,4 +96,22 @@ export async function unarchiveAdminUser(userId: number): Promise<void> {
     .eq("id", userId);
 
   if (error) throw new Error(error.message);
+}
+
+export type EmailApprovalStatus =
+  | { found: false }
+  | { found: true; approve_status: number };
+
+export async function checkEmailApprovalStatus(
+  email: string,
+): Promise<EmailApprovalStatus> {
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("approve_status")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) return { found: false };
+  return { found: true, approve_status: data.approve_status ?? 0 };
 }
