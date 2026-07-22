@@ -73,53 +73,6 @@ function normaliseZwNumber(raw: string): string | null {
   return `+263${digits.replace(/^0+/, "")}`;
 }
 
-/**
- * Generate a zero-padded 6-digit numeric code that is unique in the drivers table.
- */
-async function generateUniqueCode(
-  supabase: ReturnType<typeof createClient>,
-): Promise<string> {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const code = String(Math.floor(Math.random() * 1_000_000)).padStart(6, "0");
-    const { data } = await supabase
-      .from("drivers")
-      .select("id")
-      .eq("code", code)
-      .maybeSingle();
-    if (!data) return code;
-  }
-  throw new Error("Could not generate a unique driver code after 20 attempts");
-}
-
-/**
- * Send an SMS via Twilio REST API.
- */
-async function sendTwilioSMS(
-  to: string,
-  body: string,
-  accountSid: string,
-  authToken: string,
-  fromNumber: string,
-): Promise<void> {
-  const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
-  const credentials = btoa(`${accountSid}:${authToken}`);
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({ To: to, From: fromNumber, Body: body }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    // Non-fatal: log but don't abort the registration
-    console.error("[twilio] SMS send failed:", errText);
-  }
-}
-
 // ── Main handler ───────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request) => {
@@ -177,12 +130,6 @@ Deno.serve(async (req: Request) => {
     "accountNumber",
   ];
 
-  // Log the full received payload for debugging
-  console.log(
-    "[register-driver] received payload:",
-    JSON.stringify(payload, null, 2),
-  );
-
   const missingFields: string[] = [];
   for (const field of required) {
     const val = payload[field];
@@ -212,16 +159,8 @@ Deno.serve(async (req: Request) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // ── Twilio credentials ───────────────────────────────────────────────────────
-  const twilioAccountSid = Deno.env.get("TWILIO_ACCOUNT_SID") ?? "";
-  const twilioAuthToken = Deno.env.get("TWILIO_AUTH_TOKEN") ?? "";
-  const twilioFromNumber = Deno.env.get("TWILIO_FROM_NUMBER") ?? "+12089041849";
-
   try {
-    // 1. Generate a unique 6-digit driver code
-    const code = await generateUniqueCode(supabase);
-
-    // 2. Insert the driver record
+    // 1. Insert the driver record
     const driverRow = {
       driver_firstname: payload.firstName.trim(),
       driver_lastname: payload.lastName.trim(),
@@ -263,28 +202,22 @@ Deno.serve(async (req: Request) => {
       innbucks_number: payload.innbucksNumber
         ? normaliseZwNumber(payload.innbucksNumber)
         : null,
-      code,
     };
-    console.log(
-      "[register-driver] inserting driver row:",
-      JSON.stringify(driverRow, null, 2),
-    );
 
     const { data: driver, error: driverError } = await supabase
       .from("drivers")
       .insert(driverRow)
-      .select("id, code")
+      .select("id")
       .single();
 
     if (driverError) {
       console.error("[register-driver] driver insert error:", driverError);
       return jsonResponse({ error: driverError.message }, 500);
     }
-    console.log("[register-driver] driver inserted:", JSON.stringify(driver));
 
     const driverId = driver.id;
 
-    // 3. Insert next-of-kin record
+    // 2. Insert next-of-kin record
     const { error: kinError } = await supabase.from("next_of_kins").insert({
       driver_id: driverId,
       fullname: payload.kinFullName.trim(),
@@ -297,7 +230,7 @@ Deno.serve(async (req: Request) => {
       console.error("[register-driver] next_of_kins insert error:", kinError);
     }
 
-    // 4. Insert training records (optional)
+    // 3. Insert training records (optional)
     if (Array.isArray(payload.trainings) && payload.trainings.length > 0) {
       const trainingRows = payload.trainings.map((t) => ({
         driver_id: driverId,
@@ -317,19 +250,7 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // 5. Send Twilio SMS with the driver code (non-fatal if it fails)
-    const normalisedMobile = normaliseZwNumber(payload.mobileNumber);
-    if (normalisedMobile && twilioAccountSid && twilioAuthToken) {
-      await sendTwilioSMS(
-        normalisedMobile,
-        `Welcome to Impala! Use code ${driver.code} when signing up on the Impala mobile app.`,
-        twilioAccountSid,
-        twilioAuthToken,
-        twilioFromNumber,
-      );
-    }
-
-    return jsonResponse({ success: true, driverId, code: driver.code }, 201);
+    return jsonResponse({ success: true, driverId }, 201);
   } catch (err) {
     console.error("[register-driver] unexpected error:", err);
     return jsonResponse(

@@ -22,43 +22,6 @@ export const Route = createFileRoute("/dashboard/cab-trips/$tripId/")({
 
 const GOOGLE_MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string;
 
-const MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
-  { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
-  {
-    featureType: "poi",
-    elementType: "geometry",
-    stylers: [{ color: "#eeeeee" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "geometry",
-    stylers: [{ color: "#d4edda" }],
-  },
-  {
-    featureType: "poi.park",
-    elementType: "labels.text.fill",
-    stylers: [{ color: "#388e3c" }],
-  },
-  {
-    featureType: "road",
-    elementType: "geometry",
-    stylers: [{ color: "#ffffff" }],
-  },
-  {
-    featureType: "road.highway",
-    elementType: "geometry",
-    stylers: [{ color: "#dadada" }],
-  },
-  {
-    featureType: "water",
-    elementType: "geometry",
-    stylers: [{ color: "#c9e8f0" }],
-  },
-];
-
 // ── Polyline decoder (Google's algorithm) ─────────────────────────────────────
 
 function decodePolyline(encoded: string): { lat: number; lng: number }[] {
@@ -137,7 +100,6 @@ function TripMap({ trip }: { trip: CabTripDetail }) {
         defaultCenter={center}
         defaultZoom={14}
         mapId="trip-route-map"
-        styles={MAP_STYLE}
         gestureHandling="greedy"
         disableDefaultUI={false}
         className="h-full w-full"

@@ -6,6 +6,7 @@ import {
   Users,
   DollarSign,
   Car,
+  CarFront,
   BarChart2,
   Navigation,
   Bus,
@@ -83,6 +84,11 @@ const NAV_ITEMS: NavItem[] = [
         to: "/dashboard/car-rental-bookings/sales-personnel",
       },
     ],
+  },
+  {
+    label: "Car Out Sourcing",
+    icon: <CarFront size={18} />,
+    to: "/dashboard/out_sourcing_details",
   },
   {
     label: "Accident Reports",

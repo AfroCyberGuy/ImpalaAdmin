@@ -404,7 +404,7 @@ function RegisterDriver() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success(`Driver registered successfully! Code: ${data.code}`, {
+      toast.success("Driver registered successfully!", {
         id: toastId,
         duration: 5000,
       });

@@ -18,11 +18,13 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as DashboardSystemUsersIndexRouteImport } from './routes/dashboard/system-users/index'
 import { Route as DashboardShuttleTripsIndexRouteImport } from './routes/dashboard/shuttle-trips/index'
 import { Route as DashboardPaymentsIndexRouteImport } from './routes/dashboard/payments/index'
+import { Route as DashboardOut_sourcing_detailsIndexRouteImport } from './routes/dashboard/out_sourcing_details/index'
 import { Route as DashboardHireDriverBookingsIndexRouteImport } from './routes/dashboard/hire-driver-bookings/index'
 import { Route as DashboardDriversIndexRouteImport } from './routes/dashboard/drivers/index'
 import { Route as DashboardCarRentalBookingsIndexRouteImport } from './routes/dashboard/car-rental-bookings/index'
 import { Route as DashboardCabTripsIndexRouteImport } from './routes/dashboard/cab-trips/index'
 import { Route as DashboardAccident_reportsIndexRouteImport } from './routes/dashboard/accident_reports/index'
+import { Route as DashboardView_out_sourced_carsListingIdIndexRouteImport } from './routes/dashboard/view_out_sourced_cars/$listingId/index'
 import { Route as DashboardShuttleTripsTripIdIndexRouteImport } from './routes/dashboard/shuttle-trips/$tripId/index'
 import { Route as DashboardPricingShuttleIndexRouteImport } from './routes/dashboard/pricing/shuttle/index'
 import { Route as DashboardPricingModelIndexRouteImport } from './routes/dashboard/pricing/model/index'
@@ -84,6 +86,12 @@ const DashboardPaymentsIndexRoute = DashboardPaymentsIndexRouteImport.update({
   path: '/payments/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardOut_sourcing_detailsIndexRoute =
+  DashboardOut_sourcing_detailsIndexRouteImport.update({
+    id: '/out_sourcing_details/',
+    path: '/out_sourcing_details/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardHireDriverBookingsIndexRoute =
   DashboardHireDriverBookingsIndexRouteImport.update({
     id: '/hire-driver-bookings/',
@@ -110,6 +118,12 @@ const DashboardAccident_reportsIndexRoute =
   DashboardAccident_reportsIndexRouteImport.update({
     id: '/accident_reports/',
     path: '/accident_reports/',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardView_out_sourced_carsListingIdIndexRoute =
+  DashboardView_out_sourced_carsListingIdIndexRouteImport.update({
+    id: '/view_out_sourced_cars/$listingId/',
+    path: '/view_out_sourced_cars/$listingId/',
     getParentRoute: () => DashboardRoute,
   } as any)
 const DashboardShuttleTripsTripIdIndexRoute =
@@ -203,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/car-rental-bookings/': typeof DashboardCarRentalBookingsIndexRoute
   '/dashboard/drivers/': typeof DashboardDriversIndexRoute
   '/dashboard/hire-driver-bookings/': typeof DashboardHireDriverBookingsIndexRoute
+  '/dashboard/out_sourcing_details/': typeof DashboardOut_sourcing_detailsIndexRoute
   '/dashboard/payments/': typeof DashboardPaymentsIndexRoute
   '/dashboard/shuttle-trips/': typeof DashboardShuttleTripsIndexRoute
   '/dashboard/system-users/': typeof DashboardSystemUsersIndexRoute
@@ -219,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/pricing/model/': typeof DashboardPricingModelIndexRoute
   '/dashboard/pricing/shuttle/': typeof DashboardPricingShuttleIndexRoute
   '/dashboard/shuttle-trips/$tripId/': typeof DashboardShuttleTripsTripIdIndexRoute
+  '/dashboard/view_out_sourced_cars/$listingId/': typeof DashboardView_out_sourced_carsListingIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -231,6 +247,7 @@ export interface FileRoutesByTo {
   '/dashboard/car-rental-bookings': typeof DashboardCarRentalBookingsIndexRoute
   '/dashboard/drivers': typeof DashboardDriversIndexRoute
   '/dashboard/hire-driver-bookings': typeof DashboardHireDriverBookingsIndexRoute
+  '/dashboard/out_sourcing_details': typeof DashboardOut_sourcing_detailsIndexRoute
   '/dashboard/payments': typeof DashboardPaymentsIndexRoute
   '/dashboard/shuttle-trips': typeof DashboardShuttleTripsIndexRoute
   '/dashboard/system-users': typeof DashboardSystemUsersIndexRoute
@@ -247,6 +264,7 @@ export interface FileRoutesByTo {
   '/dashboard/pricing/model': typeof DashboardPricingModelIndexRoute
   '/dashboard/pricing/shuttle': typeof DashboardPricingShuttleIndexRoute
   '/dashboard/shuttle-trips/$tripId': typeof DashboardShuttleTripsTripIdIndexRoute
+  '/dashboard/view_out_sourced_cars/$listingId': typeof DashboardView_out_sourced_carsListingIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -261,6 +279,7 @@ export interface FileRoutesById {
   '/dashboard/car-rental-bookings/': typeof DashboardCarRentalBookingsIndexRoute
   '/dashboard/drivers/': typeof DashboardDriversIndexRoute
   '/dashboard/hire-driver-bookings/': typeof DashboardHireDriverBookingsIndexRoute
+  '/dashboard/out_sourcing_details/': typeof DashboardOut_sourcing_detailsIndexRoute
   '/dashboard/payments/': typeof DashboardPaymentsIndexRoute
   '/dashboard/shuttle-trips/': typeof DashboardShuttleTripsIndexRoute
   '/dashboard/system-users/': typeof DashboardSystemUsersIndexRoute
@@ -277,6 +296,7 @@ export interface FileRoutesById {
   '/dashboard/pricing/model/': typeof DashboardPricingModelIndexRoute
   '/dashboard/pricing/shuttle/': typeof DashboardPricingShuttleIndexRoute
   '/dashboard/shuttle-trips/$tripId/': typeof DashboardShuttleTripsTripIdIndexRoute
+  '/dashboard/view_out_sourced_cars/$listingId/': typeof DashboardView_out_sourced_carsListingIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -292,6 +312,7 @@ export interface FileRouteTypes {
     | '/dashboard/car-rental-bookings/'
     | '/dashboard/drivers/'
     | '/dashboard/hire-driver-bookings/'
+    | '/dashboard/out_sourcing_details/'
     | '/dashboard/payments/'
     | '/dashboard/shuttle-trips/'
     | '/dashboard/system-users/'
@@ -308,6 +329,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing/model/'
     | '/dashboard/pricing/shuttle/'
     | '/dashboard/shuttle-trips/$tripId/'
+    | '/dashboard/view_out_sourced_cars/$listingId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -320,6 +342,7 @@ export interface FileRouteTypes {
     | '/dashboard/car-rental-bookings'
     | '/dashboard/drivers'
     | '/dashboard/hire-driver-bookings'
+    | '/dashboard/out_sourcing_details'
     | '/dashboard/payments'
     | '/dashboard/shuttle-trips'
     | '/dashboard/system-users'
@@ -336,6 +359,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing/model'
     | '/dashboard/pricing/shuttle'
     | '/dashboard/shuttle-trips/$tripId'
+    | '/dashboard/view_out_sourced_cars/$listingId'
   id:
     | '__root__'
     | '/'
@@ -349,6 +373,7 @@ export interface FileRouteTypes {
     | '/dashboard/car-rental-bookings/'
     | '/dashboard/drivers/'
     | '/dashboard/hire-driver-bookings/'
+    | '/dashboard/out_sourcing_details/'
     | '/dashboard/payments/'
     | '/dashboard/shuttle-trips/'
     | '/dashboard/system-users/'
@@ -365,6 +390,7 @@ export interface FileRouteTypes {
     | '/dashboard/pricing/model/'
     | '/dashboard/pricing/shuttle/'
     | '/dashboard/shuttle-trips/$tripId/'
+    | '/dashboard/view_out_sourced_cars/$listingId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -440,6 +466,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPaymentsIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/out_sourcing_details/': {
+      id: '/dashboard/out_sourcing_details/'
+      path: '/out_sourcing_details'
+      fullPath: '/dashboard/out_sourcing_details/'
+      preLoaderRoute: typeof DashboardOut_sourcing_detailsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/hire-driver-bookings/': {
       id: '/dashboard/hire-driver-bookings/'
       path: '/hire-driver-bookings'
@@ -473,6 +506,13 @@ declare module '@tanstack/react-router' {
       path: '/accident_reports'
       fullPath: '/dashboard/accident_reports/'
       preLoaderRoute: typeof DashboardAccident_reportsIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/view_out_sourced_cars/$listingId/': {
+      id: '/dashboard/view_out_sourced_cars/$listingId/'
+      path: '/view_out_sourced_cars/$listingId'
+      fullPath: '/dashboard/view_out_sourced_cars/$listingId/'
+      preLoaderRoute: typeof DashboardView_out_sourced_carsListingIdIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/shuttle-trips/$tripId/': {
@@ -576,6 +616,7 @@ interface DashboardRouteChildren {
   DashboardCarRentalBookingsIndexRoute: typeof DashboardCarRentalBookingsIndexRoute
   DashboardDriversIndexRoute: typeof DashboardDriversIndexRoute
   DashboardHireDriverBookingsIndexRoute: typeof DashboardHireDriverBookingsIndexRoute
+  DashboardOut_sourcing_detailsIndexRoute: typeof DashboardOut_sourcing_detailsIndexRoute
   DashboardPaymentsIndexRoute: typeof DashboardPaymentsIndexRoute
   DashboardShuttleTripsIndexRoute: typeof DashboardShuttleTripsIndexRoute
   DashboardSystemUsersIndexRoute: typeof DashboardSystemUsersIndexRoute
@@ -592,6 +633,7 @@ interface DashboardRouteChildren {
   DashboardPricingModelIndexRoute: typeof DashboardPricingModelIndexRoute
   DashboardPricingShuttleIndexRoute: typeof DashboardPricingShuttleIndexRoute
   DashboardShuttleTripsTripIdIndexRoute: typeof DashboardShuttleTripsTripIdIndexRoute
+  DashboardView_out_sourced_carsListingIdIndexRoute: typeof DashboardView_out_sourced_carsListingIdIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -601,6 +643,8 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCarRentalBookingsIndexRoute: DashboardCarRentalBookingsIndexRoute,
   DashboardDriversIndexRoute: DashboardDriversIndexRoute,
   DashboardHireDriverBookingsIndexRoute: DashboardHireDriverBookingsIndexRoute,
+  DashboardOut_sourcing_detailsIndexRoute:
+    DashboardOut_sourcing_detailsIndexRoute,
   DashboardPaymentsIndexRoute: DashboardPaymentsIndexRoute,
   DashboardShuttleTripsIndexRoute: DashboardShuttleTripsIndexRoute,
   DashboardSystemUsersIndexRoute: DashboardSystemUsersIndexRoute,
@@ -622,6 +666,8 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardPricingModelIndexRoute: DashboardPricingModelIndexRoute,
   DashboardPricingShuttleIndexRoute: DashboardPricingShuttleIndexRoute,
   DashboardShuttleTripsTripIdIndexRoute: DashboardShuttleTripsTripIdIndexRoute,
+  DashboardView_out_sourced_carsListingIdIndexRoute:
+    DashboardView_out_sourced_carsListingIdIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
