@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, getDefaultClassNames } from "react-day-picker";
 import { format, parse, isValid } from "date-fns";
 import { CalendarDays, X } from "lucide-react";
 import "react-day-picker/style.css";
@@ -29,6 +29,7 @@ export default function DatePickerField({
 }: DatePickerFieldProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const defaultClassNames = getDefaultClassNames();
 
   const selected = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
 
@@ -130,14 +131,14 @@ export default function DatePickerField({
               } as React.CSSProperties
             }
             classNames={{
-              month_caption: "text-gray-700",
-              dropdowns: "text-gray-700",
-              dropdown: "text-gray-700",
-              nav: "text-gray-500",
-              weekday: "text-gray-400",
-              day: "text-gray-700",
-              today: "font-bold text-gray-900",
-              selected: `!bg-[${BRAND}] !text-white rounded-full`,
+              month_caption: `${defaultClassNames.month_caption} text-gray-700`,
+              dropdowns: `${defaultClassNames.dropdowns} text-gray-700`,
+              dropdown: `${defaultClassNames.dropdown} text-gray-700`,
+              nav: `${defaultClassNames.nav} text-gray-500`,
+              weekday: `${defaultClassNames.weekday} text-gray-400`,
+              day: `${defaultClassNames.day} text-gray-700`,
+              today: `${defaultClassNames.today} font-bold text-gray-900`,
+              selected: `${defaultClassNames.selected} !bg-[${BRAND}] !text-white rounded-full`,
             }}
           />
         </div>
